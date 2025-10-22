@@ -221,29 +221,39 @@
 
     // Telegram WebApp init
     if (window.Telegram && Telegram.WebApp) {
+      console.log('Telegram WebApp detected, initializing...');
       Telegram.WebApp.ready();
       const init = Telegram.WebApp.initDataUnsafe || {};
+      console.log('Telegram initDataUnsafe:', init);
       telegramUser = init.user || null;
       if (telegramUser) {
         telegramId = telegramUser.id ? String(telegramUser.id) : telegramId;
         userNameEl.innerText = telegramUser.first_name ? `Hi, ${telegramUser.first_name}` : 'Welcome';
+        console.log('Telegram User:', telegramUser);
+      } else {
+        console.log('No Telegram user data, using guest mode');
       }
+    } else {
+      console.log('Telegram WebApp SDK not loaded');
     }
 
     // Supabase Authentication (Anonymous Sign-In)
     async function initializeUser() {
+      console.log('Initializing user...');
       let { data: { user }, error } = await supabase.auth.getUser();
       if (!user || error) {
+        console.log('No user found, signing in anonymously...');
         const { data, error: signInError } = await supabase.auth.signInAnonymously();
         if (signInError) {
           console.error('Auth error:', signInError);
+          alert('Failed to authenticate: ' + signInError.message);
           return;
         }
         user = data.user;
       }
       uid = user.id;
+      console.log('User ID:', uid);
 
-      // Check if user exists in database
       let { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
@@ -251,7 +261,7 @@
         .single();
 
       if (userError || !userData) {
-        // Create new user
+        console.log('Creating new user with telegram_id:', telegramId);
         const { error: insertError } = await supabase
           .from('users')
           .insert({
@@ -264,11 +274,13 @@
           });
         if (insertError) {
           console.error('User creation error:', insertError);
+          alert('Failed to create user: ' + insertError.message);
           return;
         }
         currentBalance = 0;
         todaysCount = 0;
       } else {
+        console.log('User data found:', userData);
         currentBalance = parseFloat(userData.balance || 0);
         if (userData.daily_date === todayYMD) {
           todaysCount = parseInt(userData.daily_count || 0);
@@ -285,6 +297,7 @@
 
     // UI helpers
     function refreshUI() {
+      console.log('Refreshing UI with balance:', currentBalance, 'and count:', todaysCount);
       balanceEl.innerText = `${currentBalance.toFixed(4)} USDT`;
       adsCountEl.innerText = `${todaysCount}/${DAILY_LIMIT}`;
       const remaining = Math.max(0, DAILY_LIMIT - todaysCount);
@@ -331,6 +344,7 @@
       setAdProcessing(true);
 
       try {
+        console.log('Attempting to show ad with ymid:', telegramId);
         await show_10075454({ ymid: telegramId });
         const reward = 0.0002;
         await creditReward(reward);
@@ -345,13 +359,18 @@
     });
 
     async function creditReward(amount) {
+      console.log('Crediting reward:', amount);
       const { data: userData, error } = await supabase
         .from('users')
         .select('balance')
         .eq('id', uid)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching balance:', error);
+        alert('Failed to credit reward: ' + error.message);
+        throw error;
+      }
 
       const newBalance = +(parseFloat(userData.balance || 0) + amount).toFixed(8);
       await supabase
@@ -364,13 +383,18 @@
     }
 
     async function incrementDailyCount() {
+      console.log('Incrementing daily count...');
       const { data: userData, error } = await supabase
         .from('users')
         .select('daily_date, daily_count')
         .eq('id', uid)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching daily count:', error);
+        alert('Failed to update daily count: ' + error.message);
+        throw error;
+      }
 
       if (!userData || userData.daily_date !== todayYMD) {
         await supabase
@@ -441,7 +465,7 @@
         loadWithdrawHistory();
       } catch (err) {
         console.error('Withdraw error:', err);
-        alert('Failed to submit withdrawal. Try again later.');
+        alert('Failed to submit withdrawal: ' + err.message);
       } finally {
         withdrawBtn.disabled = false;
         withdrawBtn.innerText = '💸 Request Withdraw';
@@ -476,7 +500,7 @@
         }).join('');
       } catch (err) {
         console.error('Load history error:', err);
-        withdrawList.innerHTML = '<div class="small-muted">Failed to load history.</div>';
+        withdrawList.innerHTML = '<div class="small-muted">Failed to load history: ' + err.message + '</div>';
       }
     }
 
@@ -527,6 +551,7 @@
     // Periodic UI refresh
     setInterval(async () => {
       if (uid) {
+        console.log('Polling user data for UID:', uid);
         const { data, error } = await supabase
           .from('users')
           .select('balance, daily_date, daily_count')
@@ -534,6 +559,7 @@
           .single();
 
         if (!error && data) {
+          console.log('Polled data:', data);
           currentBalance = parseFloat(data.balance || 0);
           if (data.daily_date === todayYMD) {
             todaysCount = parseInt(data.daily_count || 0);
@@ -541,6 +567,9 @@
             todaysCount = 0;
           }
           refreshUI();
+        } else {
+          console.error('Polling error:', error);
+          alert('Failed to refresh data: ' + error.message);
         }
       }
     }, 15_000);
