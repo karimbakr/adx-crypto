@@ -1,139 +1,587 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AdX Crypto — MiniApp</title>
-<script src="https://cdn.tailwindcss.com"></script>
-<style>
-  body{ font-family:Inter,sans-serif; display:flex; justify-content:center; padding:20px; background:linear-gradient(135deg,#07133b 0%,#0f172a 40%,#0b3a6f 100%);}
-  .app{width:100%;max-width:520px;background:linear-gradient(180deg,rgba(255,255,255,0.95),rgba(243,246,255,0.95));border-radius:16px;box-shadow:0 20px 50px rgba(2,6,23,0.6);overflow:hidden;}
-  .header{padding:18px 20px;background:linear-gradient(90deg,#0ea5e9,#3b82f6);color:white;display:flex;justify-content:space-between;align-items:center;}
-  .card{padding:18px;border-radius:14px;background:linear-gradient(180deg,#ffffff,#f8fafc);box-shadow:0 8px 30px rgba(2,6,23,0.04);margin-bottom:16px;}
-  .btn-primary{background:linear-gradient(90deg,#0ea5e9,#3b82f6);color:white;padding:12px 16px;border-radius:12px;font-weight:700;width:100%;display:flex;justify-content:center;align-items:center;gap:10px;}
-  .pill{background:rgba(6,182,212,0.12);color:#065f68;padding:6px 10px;border-radius:999px;font-weight:600;font-size:13px;}
-  .small-muted{color:#6b7280;font-size:13px;}
-  .spinner{border:3px solid rgba(0,0,0,0.06);border-top:3px solid #3b82f6;width:20px;height:20px;border-radius:999px;animation:spin 1s linear infinite;display:inline-block;}
-  .hidden{display:none;}
-  @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>AdX Crypto — MiniApp</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{
+      --primary-start:#0ea5e9;
+      --primary-end:#3b82f6;
+      --card:#ffffff;
+      --muted:#6b7280;
+    }
+    body{
+      background: linear-gradient(135deg,#07133b 0%, #0f172a 40%, #0b3a6f 100%);
+      min-height:100vh;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+      color:#0f172a;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      padding:20px;
+    }
+    .app {
+      width:100%;
+      max-width:520px;
+      border-radius:16px;
+      overflow:hidden;
+      box-shadow:0 20px 50px rgba(2,6,23,0.6);
+      background: linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(243,246,255,0.95) 100%);
+    }
+    .header{
+      padding:18px 20px;
+      background: linear-gradient(90deg,var(--primary-start), var(--primary-end));
+      color:white;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+    }
+    .nav-bottom{
+      height:72px;
+      display:flex;
+      gap:8px;
+      padding:10px;
+      background:linear-gradient(180deg, rgba(15,23,42,0.02), rgba(15,23,42,0.02));
+      border-top:1px solid rgba(15,23,42,0.04);
+    }
+    .tab-btn{flex:1; border-radius:12px; padding:10px; display:flex; gap:8px; align-items:center; justify-content:center; font-weight:600;}
+    .tab-active{ background: linear-gradient(90deg,var(--primary-start), var(--primary-end)); color:white; box-shadow: 0 6px 20px rgba(14,165,233,0.18);}
+    .tab-inactive{ background:white; color: #0f172a; box-shadow: 0 6px 18px rgba(2,6,23,0.06);}
+    .small-muted{ color: var(--muted); font-size:13px;}
+    .pill{ background: rgba(6,182,212,0.12); color: #职工; padding:6px 10px; border-radius:999px; font-weight:600; font-size:13px;}
+    .spinner{ border:3px solid rgba(0,0,0,0.06); border-top:3px solid rgba(59,130,246,1); width:20px;height:20px;border-radius:999px; animation:spin 1s linear infinite; display:inline-block;}
+    @keyframes spin{0%{transform:rotate(0)}100%{transform:rotate(360deg)}}
+    .muted{ color: #6b7280;}
+    .card{ padding:18px; border-radius:14px; background: linear-gradient(180deg,#ffffff,#f8fafc); box-shadow: 0 8px 30px rgba(2,6,23,0.04); }
+    .danger{ background: linear-gradient(90deg,#ef4444,#ef5858); color:white;}
+    input:focus{ outline: none; box-shadow: 0 0 0 4px rgba(59,130,246,0.08); border-color:#3b82f6;}
+    .btn-primary{ background: linear-gradient(90deg,var(--primary-start),var(--primary-end)); color:white; padding:12px 16px; border-radius:12px; font-weight:700; box-shadow:0 8px 30px rgba(59,130,246,0.12);}
+    .btn-ghost{ background: transparent; border:1px solid rgba(15,23,42,0.06); padding:10px 12px; border-radius:10px; }
+    .small{ font-size:13px;}
+    .hidden{ display:none; }
+  </style>
+
+  <!-- Telegram WebApp SDK -->
+  <script src="https://telegram.org/js/telegram-web-app.js" defer></script>
+  <!-- Monetag SDK -->
+  <script src="//libtl.com/sdk.js" data-zone="10075454" data-sdk="show_10075454" defer></script>
+  <!-- Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 <body>
-<div class="app">
-  <div class="header">
-    <div>
-      <div style="font-weight:800; font-size:18px;">AdX Crypto</div>
-      <div class="small-muted">Earn USDT by watching rewarded ads</div>
+  <div class="app">
+    <div class="header">
+      <div>
+        <div style="font-weight:800; font-size:18px">AdX Crypto</div>
+        <div class="small-muted small">Earn USDT by watching rewarded ads</div>
+      </div>
+      <div style="text-align:right">
+        <div id="userName" class="small-muted small">Welcome</div>
+        <div id="todayDate" class="small-muted small">--</div>
+      </div>
     </div>
-    <div style="text-align:right;">
-      <div id="userName" class="small-muted">Welcome</div>
-      <div id="todayDate" class="small-muted">--</div>
-    </div>
-  </div>
 
-  <div style="padding:18px;">
-    <div class="card">
-      <div style="display:flex;justify-content:space-between;align-items:center;">
-        <div>
-          <div class="small-muted">Your Balance</div>
-          <div id="balance" style="font-size:20px;font-weight:800;">Loading...</div>
+    <div style="padding:18px; gap:16px; display:flex; flex-direction:column;">
+      <!-- HOME PANEL -->
+      <div id="panel-home" class="panel">
+        <div class="card mb-4">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div class="small-muted">Your Balance</div>
+              <div id="balance" style="font-size:20px; font-weight:800">Loading...</div>
+            </div>
+            <div style="text-align:right">
+              <div class="small-muted">Daily Ads</div>
+              <div style="display:flex; align-items:center; gap:8px;">
+                <div id="adsCount" style="font-weight:800; font-size:18px">0/100</div>
+                <div id="adsRemainingPill" class="pill">100 left</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:14px;">
+            <div class="small-muted">Progress</div>
+            <div style="height:10px; background:rgba(2,6,23,0.04); border-radius:999px; margin-top:8px; overflow:hidden;">
+              <div id="progressBar" style="height:100%; width:0%; background:linear-gradient(90deg,var(--primary-start),var(--primary-end));"></div>
+            </div>
+          </div>
         </div>
-        <div style="text-align:right;">
-          <div class="small-muted">Daily Ads</div>
-          <div style="display:flex;align-items:center;gap:8px;">
-            <div id="adsCount" style="font-weight:800;font-size:18px;">0/100</div>
-            <div id="adsRemainingPill" class="pill">100 left</div>
+
+        <div class="card mb-4" style="text-align:center;">
+          <div style="font-weight:700; font-size:16px; margin-bottom:8px;">Watch rewarded ad</div>
+          <div class="small-muted mb-4">Each ad = <strong>0.0002 USDT</strong>. Daily limit is <strong>100 ads</strong>.</div>
+
+          <button id="watchBtn" class="btn-primary w-full" style="display:flex; align-items:center; justify-content:center; gap:10px;">
+            <span id="watchBtnText">🎬 Watch Ad & Earn 0.0002</span>
+            <span id="watchBtnSpinner" class="spinner hidden"></span>
+          </button>
+
+          <div id="watchNote" class="small-muted small" style="margin-top:12px;">Remaining clicks may be limited to prevent fraud.</div>
+        </div>
+
+        <div class="card">
+          <div style="display:flex; justify-content:space-between; align-items:center;">
+            <div>
+              <div style="font-weight:700;">How it works</div>
+              <div class="small-muted small">Tap Watch → Ad loads & plays → Reward credited on success.</div>
+            </div>
+            <div>
+              <div class="small-muted small">Min withdraw</div>
+              <div style="font-weight:700">0.05 USDT</div>
+            </div>
           </div>
         </div>
       </div>
-      <div style="margin-top:14px;">
-        <div class="small-muted">Progress</div>
-        <div style="height:10px;background:rgba(2,6,23,0.04);border-radius:999px;margin-top:8px;overflow:hidden;">
-          <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,#0ea5e9,#3b82f6);"></div>
+
+      <!-- WITHDRAW PANEL -->
+      <div id="panel-withdraw" class="panel hidden">
+        <div class="card mb-4">
+          <div style="font-weight:800; font-size:16px; margin-bottom:8px;">Withdraw</div>
+          <div class="small-muted small mb-3">Enter your Binance ID and request withdrawal. Min: <strong>0.05 USDT</strong></div>
+
+          <input id="binanceId" placeholder="Enter Binance ID (e.g. 0x... or UID...)" class="w-full p-3 mb-3 border rounded-lg" />
+
+          <div style="display:flex; gap:10px;">
+            <button id="withdrawBtn" class="btn-primary flex-1">💸 Request Withdraw</button>
+            <button id="refreshWithdrawHistory" class="btn-ghost" title="Refresh">⟳</button>
+          </div>
+        </div>
+
+        <div class="card">
+          <div style="font-weight:800; font-size:15px; margin-bottom:8px;">Recent Withdrawals</div>
+          <div id="withdrawList" class="small-muted small">Loading...</div>
+        </div>
+      </div>
+
+      <!-- SUPPORT PANEL -->
+      <div id="panel-support" class="panel hidden">
+        <div class="card">
+          <div style="font-weight:800; font-size:16px; margin-bottom:8px;">Contact Support</div>
+          <div class="small-muted small mb-4">For help, open the Telegram chat with our support.</div>
+          <button id="supportBtn" class="btn-primary w-full">📞 Contact Support</button>
+          <div class="small-muted small" style="margin-top:12px;">Or join our channel for updates.</div>
         </div>
       </div>
     </div>
 
-    <div class="card" style="text-align:center;">
-      <div style="font-weight:700;font-size:16px;margin-bottom:8px;">Watch rewarded ad</div>
-      <div class="small-muted mb-4">Each ad = <strong>0.0002 USDT</strong>. Daily limit is <strong>100 ads</strong>.</div>
-      <button id="watchBtn" class="btn-primary">
-        <span id="watchBtnText">🎬 Watch Ad & Earn 0.0002</span>
-        <span id="watchBtnSpinner" class="spinner hidden"></span>
-      </button>
+    <!-- Bottom Navigation -->
+    <div class="nav-bottom">
+      <button id="navHome" class="tab-btn tab-active" data-target="panel-home">🏠 Home</button>
+      <button id="navWithdraw" class="tab-btn tab-inactive" data-target="panel-withdraw">💸 Withdraw</button>
+      <button id="navSupport" class="tab-btn tab-inactive" data-target="panel-support">📞 Support</button>
     </div>
   </div>
-</div>
 
-<script type="module">
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+  <!-- Supabase Script -->
+  <script>
+    // إعداد Supabase Client
+    const supabaseUrl = 'https://utexgcepqmwaxnstjhwl.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0ZXhnY2VwcW13YXhuc3RqaHdsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjExNjAyNjMsImV4cCI6MjA3NjczNjI2M30.mdsQgtLMpOHBOJCP1eWs3bdo8weaEcNdtcPtz6zS-X0';
+    const supabase = Supabase.createClient(supabaseUrl, supabaseKey);
 
-const SUPABASE_URL = 'https://utexgcepqmwaxnstjhwl.supabase.co';
-const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InV0ZXhnY2VwcW13YXhuc3RqaHdsIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc2MTE2MDI2MywiZXhwIjoyMDc2NzM2MjYzfQ.XXLnrjC1-4bzzvaoWPCqUOExDJlW1XyIZ_9aHIiEMbQ'; // ضعها في Vercel Environment لاحقاً
-const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+    // UI ELEMENTS
+    const userNameEl = document.getElementById('userName');
+    const todayDateEl = document.getElementById('todayDate');
+    const balanceEl = document.getElementById('balance');
+    const adsCountEl = document.getElementById('adsCount');
+    const adsRemainingPill = document.getElementById('adsRemainingPill');
+    const progressBar = document.getElementById('progressBar');
+    const watchBtn = document.getElementById('watchBtn');
+    const watchBtnSpinner = document.getElementById('watchBtnSpinner');
+    const watchBtnText = document.getElementById('watchBtnText');
+    const binanceInput = document.getElementById('binanceId');
+    const withdrawBtn = document.getElementById('withdrawBtn');
+    const withdrawList = document.getElementById('withdrawList');
+    const refreshWithdrawBtn = document.getElementById('refreshWithdrawHistory');
+    const supportBtn = document.getElementById('supportBtn');
+    const navHome = document.getElementById('navHome');
+    const navWithdraw = document.getElementById('navWithdraw');
+    const navSupport = document.getElementById('navSupport');
+    const panelHome = document.getElementById('panel-home');
+    const panelWithdraw = document.getElementById('panel-withdraw');
+    const panelSupport = document.getElementById('panel-support');
 
-const balanceEl = document.getElementById('balance');
-const adsCountEl = document.getElementById('adsCount');
-const adsRemainingPill = document.getElementById('adsRemainingPill');
-const progressBar = document.getElementById('progressBar');
-const watchBtn = document.getElementById('watchBtn');
-const watchBtnSpinner = document.getElementById('watchBtnSpinner');
-const watchBtnText = document.getElementById('watchBtnText');
+    // APP STATE
+    let telegramUser = null;
+    let telegramId = 'guest-' + Date.now();
+    let uid = null;
+    let currentBalance = 0;
+    const DAILY_LIMIT = 100;
+    let todaysCount = 0;
+    let isProcessingAd = false;
 
-const DAILY_LIMIT = 100;
-let currentBalance = 0;
-let todaysCount = 0;
-let isProcessingAd = false;
+    function formatDateYMD(d) {
+      return d.toISOString().slice(0, 10); // YYYY-MM-DD
+    }
 
-const todayYMD = new Date().toISOString().slice(0,10);
-document.getElementById('todayDate').innerText = todayYMD;
+    const todayYMD = formatDateYMD(new Date());
+    todayDateEl.innerText = todayYMD;
 
-let userId = 'guest-' + Date.now();
+    // Telegram WebApp init
+    if (window.Telegram && Telegram.WebApp) {
+      Telegram.WebApp.ready();
+      const init = Telegram.WebApp.initDataUnsafe || {};
+      telegramUser = init.user || null;
+      if (telegramUser) {
+        telegramId = telegramUser.id ? String(telegramUser.id) : telegramId;
+        userNameEl.innerText = telegramUser.first_name ? `Hi, ${telegramUser.first_name}` : 'Welcome';
+      }
+    }
 
-async function setupUser(){
-  const { data, error } = await supabase.from('users').select('*').eq('id', userId).single();
-  if(error || !data){
-    await supabase.from('users').insert({id:userId,balance:0,daily:{date:todayYMD,count:0},createdAt:Date.now()});
-    currentBalance=0; todaysCount=0;
-  } else {
-    currentBalance=parseFloat(data.balance||0);
-    if(data.daily?.date===todayYMD) todaysCount=parseInt(data.daily.count||0);
-    else { todaysCount=0; await supabase.from('users').update({daily:{date:todayYMD,count:0}}).eq('id',userId);}
-  }
-  refreshUI();
-}
+    // Supabase Authentication (Anonymous Sign-In)
+    async function initializeUser() {
+      let { data: { user }, error } = await supabase.auth.getUser();
+      if (!user || error) {
+        const { data, error: signInError } = await supabase.auth.signInAnonymously();
+        if (signInError) {
+          console.error('Auth error:', signInError);
+          return;
+        }
+        user = data.user;
+      }
+      uid = user.id;
 
-function refreshUI(){
-  balanceEl.innerText = currentBalance.toFixed(4)+' USDT';
-  adsCountEl.innerText = todaysCount+'/'+DAILY_LIMIT;
-  const remaining=Math.max(0,DAILY_LIMIT-todaysCount);
-  adsRemainingPill.innerText = remaining+' left';
-  progressBar.style.width = Math.min(100,Math.round((todaysCount/DAILY_LIMIT)*100))+'%';
-  if(todaysCount>=DAILY_LIMIT) disableWatchButton(true,"You've reached today's limit");
-  else disableWatchButton(false,'🎬 Watch Ad & Earn 0.0002');
-}
+      // Check if user exists in database
+      let { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', uid)
+        .single();
 
-function disableWatchButton(disable,text){
-  if(disable){ watchBtn.setAttribute('disabled','true'); watchBtn.classList.add('opacity-60'); watchBtnText.innerText=text;}
-  else{ watchBtn.removeAttribute('disabled'); watchBtn.classList.remove('opacity-60'); watchBtnText.innerText=text;}
-}
+      if (userError || !userData) {
+        // Create new user
+        const { error: insertError } = await supabase
+          .from('users')
+          .insert({
+            id: uid,
+            telegram_id: telegramId,
+            balance: 0,
+            daily_date: todayYMD,
+            daily_count: 0,
+            created_at: Date.now()
+          });
+        if (insertError) {
+          console.error('User creation error:', insertError);
+          return;
+        }
+        currentBalance = 0;
+        todaysCount = 0;
+      } else {
+        currentBalance = parseFloat(userData.balance || 0);
+        if (userData.daily_date === todayYMD) {
+          todaysCount = parseInt(userData.daily_count || 0);
+        } else {
+          todaysCount = 0;
+          await supabase
+            .from('users')
+            .update({ daily_date: todayYMD, daily_count: 0 })
+            .eq('id', uid);
+        }
+      }
+      refreshUI();
+    }
 
-async function creditReward(amount){
-  currentBalance+=amount;
-  todaysCount++;
-  await supabase.from('users').update({balance:currentBalance,daily:{date:todayYMD,count:todaysCount}}).eq('id',userId);
-  refreshUI();
-}
+    // UI helpers
+    function refreshUI() {
+      balanceEl.innerText = `${currentBalance.toFixed(4)} USDT`;
+      adsCountEl.innerText = `${todaysCount}/${DAILY_LIMIT}`;
+      const remaining = Math.max(0, DAILY_LIMIT - todaysCount);
+      adsRemainingPill.innerText = `${remaining} left`;
+      const percent = Math.min(100, Math.round((todaysCount / DAILY_LIMIT) * 100));
+      progressBar.style.width = percent + '%';
 
-watchBtn.addEventListener('click',async ()=>{
-  if(isProcessingAd || todaysCount>=DAILY_LIMIT) return;
-  isProcessingAd=true; watchBtnSpinner.classList.remove('hidden');
-  try{ await new Promise(res=>setTimeout(res,1500)); await creditReward(0.0002);}
-  catch(e){console.error(e);}
-  finally{watchBtnSpinner.classList.add('hidden'); isProcessingAd=false;}
-});
+      if (todaysCount >= DAILY_LIMIT) {
+        disableWatchButton(true, "You've reached today's limit");
+      } else {
+        disableWatchButton(false, '🎬 Watch Ad & Earn 0.0002');
+      }
 
-setupUser();
-</script>
+      withdrawBtn.disabled = currentBalance < 0.05 || !binanceInput.value.trim();
+    }
+
+    function disableWatchButton(disable, text) {
+      if (disable) {
+        watchBtn.setAttribute('disabled', 'true');
+        watchBtn.classList.add('opacity-60');
+        watchBtnText.innerText = 'You reached today’s limit';
+      } else {
+        watchBtn.removeAttribute('disabled');
+        watchBtn.classList.remove('opacity-60');
+        watchBtnText.innerText = text;
+      }
+    }
+
+    function setAdProcessing(on) {
+      isProcessingAd = on;
+      if (on) {
+        watchBtnSpinner.classList.remove('hidden');
+      } else {
+        watchBtnSpinner.classList.add('hidden');
+      }
+    }
+
+    // WATCH AD FLOW
+    watchBtn.addEventListener('click', async () => {
+      if (isProcessingAd || todaysCount >= DAILY_LIMIT) {
+        disableWatchButton(true);
+        return;
+      }
+      setAdProcessing(true);
+
+      try {
+        await show_10075454({ ymid: telegramId });
+        const reward = 0.0002;
+        await creditReward(reward);
+        await incrementDailyCount();
+        showTempStatus('✅ Ad watched! Reward credited.');
+      } catch (err) {
+        console.error('Ad error:', err);
+        showTempStatus('❌ Ad failed or skipped. Try again.');
+      } finally {
+        setAdProcessing(false);
+      }
+    });
+
+    async function creditReward(amount) {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('balance')
+        .eq('id', uid)
+        .single();
+
+      if (error) throw error;
+
+      const newBalance = +(parseFloat(userData.balance || 0) + amount).toFixed(8);
+      await supabase
+        .from('users')
+        .update({ balance: newBalance })
+        .eq('id', uid);
+
+      currentBalance = newBalance;
+      refreshUI();
+    }
+
+    async function incrementDailyCount() {
+      const { data: userData, error } = await supabase
+        .from('users')
+        .select('daily_date, daily_count')
+        .eq('id', uid)
+        .single();
+
+      if (error) throw error;
+
+      if (!userData || userData.daily_date !== todayYMD) {
+        await supabase
+          .from('users')
+          .update({ daily_date: todayYMD, daily_count: 1 })
+          .eq('id', uid);
+        todaysCount = 1;
+      } else {
+        const newCount = (parseInt(userData.daily_count || 0) + 1);
+        await supabase
+          .from('users')
+          .update({ daily_date: todayYMD, daily_count: newCount })
+          .eq('id', uid);
+        todaysCount = newCount;
+      }
+      refreshUI();
+    }
+
+    function showTempStatus(text) {
+      const prev = watchBtnText.innerText;
+      watchBtnText.innerText = text;
+      setTimeout(() => {
+        if (todaysCount >= DAILY_LIMIT) {
+          disableWatchButton(true);
+        } else {
+          watchBtnText.innerText = prev;
+        }
+      }, 1800);
+    }
+
+    // WITHDRAW FLOW
+    withdrawBtn.addEventListener('click', async () => {
+      const binanceId = binanceInput.value.trim();
+      if (!binanceId) {
+        alert('Please enter your Binance ID.');
+        return;
+      }
+      if (currentBalance < 0.05) {
+        alert('Insufficient balance. Minimum withdraw is 0.05 USDT.');
+        return;
+      }
+
+      withdrawBtn.disabled = true;
+      withdrawBtn.innerText = 'Processing...';
+
+      try {
+        const timestamp = Date.now();
+        const withdrawalData = {
+          user_id: uid,
+          telegram_id: telegramId,
+          amount: currentBalance,
+          binance_id: binanceId,
+          status: 'pending',
+          timestamp: timestamp
+        };
+
+        await supabase.from('withdrawals').insert(withdrawalData);
+        await supabase
+          .from('users')
+          .update({ balance: 0 })
+          .eq('id', uid);
+
+        currentBalance = 0;
+        binanceInput.value = '';
+        refreshUI();
+
+        alert('Withdrawal request submitted! Our team will process it.');
+        loadWithdrawHistory();
+      } catch (err) {
+        console.error('Withdraw error:', err);
+        alert('Failed to submit withdrawal. Try again later.');
+      } finally {
+        withdrawBtn.disabled = false;
+        withdrawBtn.innerText = '💸 Request Withdraw';
+      }
+    });
+
+    async function loadWithdrawHistory() {
+      withdrawList.innerHTML = 'Loading...';
+      try {
+        const { data, error } = await supabase
+          .from('withdrawals')
+          .select('*')
+          .eq('user_id', uid)
+          .order('timestamp', { ascending: false })
+          .limit(10);
+
+        if (error || !data || data.length === 0) {
+          withdrawList.innerHTML = '<div class="small-muted">No withdrawals yet.</div>';
+          return;
+        }
+
+        withdrawList.innerHTML = data.map(r => {
+          const d = new Date(r.timestamp);
+          const t = d.toLocaleString();
+          return `<div style="padding:10px;border-radius:10px;margin-bottom:8px;background:linear-gradient(90deg,#f8fafc,#ffffff);">
+            <div style="display:flex;justify-content:space-between;">
+              <div style="font-weight:700">${r.amount.toFixed(4)} USDT</div>
+              <div class="small-muted">${r.status}</div>
+            </div>
+            <div class="small-muted small">${r.binance_id} · ${t}</div>
+          </div>`;
+        }).join('');
+      } catch (err) {
+        console.error('Load history error:', err);
+        withdrawList.innerHTML = '<div class="small-muted">Failed to load history.</div>';
+      }
+    }
+
+    refreshWithdrawBtn.addEventListener('click', loadWithdrawHistory);
+
+    // NAVIGATION
+    function setActiveTab(tab) {
+      [navHome, navWithdraw, navSupport].forEach(btn => {
+        btn.classList.remove('tab-active');
+        btn.classList.add('tab-inactive');
+      });
+      [panelHome, panelWithdraw, panelSupport].forEach(p => p.classList.add('hidden'));
+
+      if (tab === 'home') {
+        navHome.classList.add('tab-active');
+        navHome.classList.remove('tab-inactive');
+        panelHome.classList.remove('hidden');
+      } else if (tab === 'withdraw') {
+        navWithdraw.classList.add('tab-active');
+        navWithdraw.classList.remove('tab-inactive');
+        panelWithdraw.classList.remove('hidden');
+        loadWithdrawHistory();
+      } else {
+        navSupport.classList.add('tab-active');
+        navSupport.classList.remove('tab-inactive');
+        panelSupport.classList.remove('hidden');
+      }
+    }
+
+    navHome.addEventListener('click', () => setActiveTab('home'));
+    navWithdraw.addEventListener('click', () => setActiveTab('withdraw'));
+    navSupport.addEventListener('click', () => setActiveTab('support'));
+
+    // Initialize
+    setActiveTab('home');
+    initializeUser();
+
+    // SUPPORT
+    supportBtn.addEventListener('click', () => {
+      window.open('https://t.me/AdXCryptoo', '_blank');
+    });
+
+    // Enable/disable withdraw button on input change
+    binanceInput.addEventListener('input', () => {
+      withdrawBtn.disabled = currentBalance < 0.05 || !binanceInput.value.trim();
+    });
+
+    // Periodic UI refresh
+    setInterval(async () => {
+      if (uid) {
+        const { data, error } = await supabase
+          .from('users')
+          .select('balance, daily_date, daily_count')
+          .eq('id', uid)
+          .single();
+
+        if (!error && data) {
+          currentBalance = parseFloat(data.balance || 0);
+          if (data.daily_date === todayYMD) {
+            todaysCount = parseInt(data.daily_count || 0);
+          } else {
+            todaysCount = 0;
+          }
+          refreshUI();
+        }
+      }
+    }, 15_000);
+
+    // Security measures
+    (function () {
+      document.onkeydown = function (e) {
+        if (
+          e.keyCode == 123 ||
+          (e.ctrlKey && e.shiftKey && e.keyCode == 73) ||
+          (e.ctrlKey && e.shiftKey && e.keyCode == 74) ||
+          (e.ctrlKey && e.keyCode == 85)
+        ) {
+          e.preventDefault();
+          return false;
+        }
+      };
+
+      document.addEventListener("contextmenu", function (e) {
+        e.preventDefault();
+      });
+
+      let checkDevTools = setInterval(function () {
+        const start = performance.now();
+        debugger;
+        const end = performance.now();
+        if (end - start > 100) {
+          alert("Developer tools detected! Access blocked.");
+          window.location.reload();
+        }
+      }, 1500);
+
+      window.onerror = function () {
+        return true;
+      };
+
+      console.log = function () {};
+      console.warn = function () {};
+      console.error = function () {};
+      console.info = function () {};
+    })();
+  </script>
 </body>
 </html>
